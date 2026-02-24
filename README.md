@@ -1,32 +1,48 @@
-# Adaptive Sparse LLM (Work in Progress)
+# Multi-Task MoE Assistant (Work in Progress)
 
-This repository contains an ongoing project focused on building a cost-aware Mixture-of-Experts (MoE) based language model system.
+This project explores building a multi-task AI assistant using a Mixture-of-Experts (MoE) architecture.
+
+Instead of relying on a single dense feed-forward network for all tasks, the model routes inputs to specialized experts designed to handle different types of tasks.
 
 ## Motivation
 
-Modern large language models are computationally expensive because every token passes through the full dense network. However, many real-world requests may not require the full model capacity.
+Modern language models are typically dense: every input passes through the same parameters regardless of task type.
 
-This project explores whether a sparse Mixture-of-Experts architecture can reduce compute usage while maintaining task performance.
+This project investigates whether task-specialized experts within a shared Transformer backbone can:
 
-## Current Focus
+- Encourage functional specialization
+- Improve modularity
+- Provide clearer separation between different task behaviors
 
-The initial phase of this project aims to:
+## Initial Scope
 
-- Implement a Transformer backbone
-- Integrate a Mixture-of-Experts (MoE) feed-forward layer
-- Implement top-k routing
-- Add auxiliary load balancing loss
-- Establish a clean training and evaluation pipeline
+The first phase focuses on three tasks:
 
-## Goals (Early Stage)
+- Summarization
+- Question Answering
+- Email / Text Rewriting
 
-- Compare dense vs sparse forward pass compute cost
-- Track expert utilization statistics
-- Analyze routing behavior across different input types
+Each task will be trained within a shared model that contains multiple experts.  
+A routing mechanism determines which expert processes a given input.
 
-## Status
+## Architecture Overview
 
-🚧 Work in progress.  
-The repository is currently under active development.
+- Shared Transformer backbone
+- Mixture-of-Experts feed-forward layer
+- Top-k routing mechanism
+- Auxiliary load-balancing objective
 
-## Planned Structure
+The goal is to observe and analyze how experts specialize across tasks.
+
+## Current Status
+
+🚧 Early development stage.
+
+Planned steps:
+
+1. Implement core MoE layer
+2. Integrate into Transformer block
+3. Train on multi-task dataset
+4. Track expert utilization across tasks
+
+## Repository Structure
