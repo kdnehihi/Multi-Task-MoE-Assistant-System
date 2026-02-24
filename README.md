@@ -33,7 +33,17 @@ A routing mechanism determines which expert processes a given input.
 - Auxiliary load-balancing objective
 
 The goal is to observe and analyze how experts specialize across tasks.
+## References
 
+This project is inspired by and built upon ideas from:
+
+- Switch Transformer (Fedus et al., 2021)
+- Mixtral 8x7B Technical Report (Mistral AI, 2023)
+- Literature on multi-task learning and parameter sharing
+
+The goal of this repository is not to reproduce these works,
+but to implement a simplified, educational version of
+task-specialized Mixture-of-Experts models.
 ## Current Status
 
 🚧 Early development stage.
