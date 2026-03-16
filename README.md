@@ -163,6 +163,7 @@ This repository is inspired by:
 
 - Switch Transformer (Fedus et al., 2021)
 - Mixtral 8x7B Technical Report (Mistral AI, 2023)
-- literature on multitask learning and modular architectures
+- MoME: Mixture of Multimodal Experts for Generalist
+Multimodal Large Language Models
 
 The goal is not to reproduce these systems exactly, but to build a smaller research-oriented implementation for understanding multitask expert specialization in multimodal settings.
