@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Local dataset/cache artifacts
+.hf_cache/
+data/raw/*.parquet
+data/processed/*.parquet
+data/processed/inspection_previews/
+
+# Keep empty data directories tracked if needed
+!data/raw/.gitkeep
+!data/processed/.gitkeep
