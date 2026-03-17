@@ -50,7 +50,7 @@ What is already implemented:
   - image resize
   - text normalization
   - tokenizer-based conversion to `input_ids`, `attention_mask`, and `labels`
-- first multimodal baseline training and prediction scripts using a pretrained vision-language model
+- single-task BLIP baselines for `DocVQA` and `ChartQA` to support later comparison with MoE models
 
 What is not implemented yet:
 
@@ -69,7 +69,7 @@ The current intended workflow is:
 3. Inspect data quality and schema
 4. Merge both datasets into a single multitask dataset
 5. Apply basic preprocessing for training
-6. Train a first multitask baseline
+6. Train single-task baselines for each source dataset
 7. Introduce MoE routing and expert specialization experiments
 
 ## Environment
@@ -105,9 +105,9 @@ Multi-Task-MoE-Assistant-System
     │   ├── preprocess_multitask_dataset.py
     │   └── prepare_training_dataset.py
     ├── train/
-    │   └── train_multimodal_baseline.py
+    │   ├── train_blip_docvqa.py
+    │   └── train_blip_chartqa.py
     └── infer/
-        └── predict_multimodal_baseline.py
 ```
 
 ## Scripts
@@ -144,16 +144,15 @@ Multi-Task-MoE-Assistant-System
 - tokenizes question and answer text
 - saves a HuggingFace dataset artifact for training
 
-`scripts/train/train_multimodal_baseline.py`
+`scripts/train/train_blip_docvqa.py`
 
-- trains a first pretrained multimodal baseline on the merged dataset
-- uses image + question as input and answer as target
+- trains a BLIP baseline only on the `DocVQA` subset
+- provides a single-task loss baseline for later MoE comparison
 
-`scripts/infer/predict_multimodal_baseline.py`
+`scripts/train/train_blip_chartqa.py`
 
-- loads the trained baseline model
-- runs qualitative prediction on a few samples
-- helps quickly inspect whether the model is learning meaningful answers
+- trains a BLIP baseline only on the `ChartQA` subset
+- provides a single-task loss baseline for later MoE comparison
 
 ## Notebook
 
@@ -168,7 +167,7 @@ Multi-Task-MoE-Assistant-System
 
 The medium-term plan is:
 
-1. establish a clean multitask multimodal baseline
+1. establish strong single-task and multitask multimodal baselines
 2. define a shared model backbone
 3. introduce MoE feed-forward experts
 4. study routing behavior across task types
