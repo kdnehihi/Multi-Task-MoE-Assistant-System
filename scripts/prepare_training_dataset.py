@@ -29,6 +29,10 @@ def preprocess_image(image):
     return image.resize(IMAGE_SIZE, Image.BILINEAR)
 
 
+def build_labels(token_ids, pad_token_id):
+    return [-100 if token_id == pad_token_id else token_id for token_id in token_ids]
+
+
 def main() -> None:
     print("Loading multitask dataset...", flush=True)
     dataset = load_dataset("parquet", data_files=str(INPUT_PATH), split="train")
@@ -54,6 +58,7 @@ def main() -> None:
             padding="max_length",
             max_length=ANSWER_MAX_LENGTH,
         )
+        labels = build_labels(answer_tokens["input_ids"], tokenizer.pad_token_id)
 
         return {
             "task": example["task"],
@@ -62,7 +67,7 @@ def main() -> None:
             "answer": answer,
             "input_ids": question_tokens["input_ids"],
             "attention_mask": question_tokens["attention_mask"],
-            "labels": answer_tokens["input_ids"],
+            "labels": labels,
         }
 
     training_dataset = dataset.map(preprocess_example)
