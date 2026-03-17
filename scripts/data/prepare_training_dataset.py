@@ -5,7 +5,7 @@ from PIL import Image
 from transformers import AutoTokenizer
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
 INPUT_PATH = PROCESSED_DIR / "multitask_dataset.parquet"

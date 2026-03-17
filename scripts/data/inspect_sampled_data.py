@@ -7,7 +7,7 @@ from typing import Iterable
 from datasets import load_dataset
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"
 PREVIEW_DIR = PROJECT_ROOT / "data" / "processed" / "inspection_previews"
 

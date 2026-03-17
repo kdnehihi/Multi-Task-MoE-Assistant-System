@@ -50,6 +50,7 @@ What is already implemented:
   - image resize
   - text normalization
   - tokenizer-based conversion to `input_ids`, `attention_mask`, and `labels`
+- first multimodal baseline training and prediction scripts using a pretrained vision-language model
 
 What is not implemented yet:
 
@@ -96,47 +97,63 @@ Multi-Task-MoE-Assistant-System
 ├── notebooks/
 │   └── 01_data_inspection.ipynb
 └── scripts/
-    ├── DownloadDataset.py
-    ├── InspectDataset.py
-    ├── sample_datasets.py
-    ├── inspect_sampled_data.py
-    ├── preprocess_multitask_dataset.py
-    └── prepare_training_dataset.py
+    ├── data/
+    │   ├── DownloadDataset.py
+    │   ├── InspectDataset.py
+    │   ├── sample_datasets.py
+    │   ├── inspect_sampled_data.py
+    │   ├── preprocess_multitask_dataset.py
+    │   └── prepare_training_dataset.py
+    ├── train/
+    │   └── train_multimodal_baseline.py
+    └── infer/
+        └── predict_multimodal_baseline.py
 ```
 
 ## Scripts
 
-`scripts/DownloadDataset.py`
+`scripts/data/DownloadDataset.py`
 
 - downloads the original HuggingFace datasets
 
-`scripts/sample_datasets.py`
+`scripts/data/sample_datasets.py`
 
 - samples:
   - `5000` examples from `DocVQA`
   - `3000` examples from `ChartQA`
 - saves sampled parquet files into `data/raw/`
 
-`scripts/inspect_sampled_data.py`
+`scripts/data/inspect_sampled_data.py`
 
 - loads sampled parquet files
 - prints schema and example rows
 - exports preview images for manual inspection
 
-`scripts/preprocess_multitask_dataset.py`
+`scripts/data/preprocess_multitask_dataset.py`
 
 - loads sampled datasets
 - normalizes both sources into a shared schema
 - merges them into a multitask dataset
 - saves the merged parquet file into `data/processed/`
 
-`scripts/prepare_training_dataset.py`
+`scripts/data/prepare_training_dataset.py`
 
 - loads the multitask dataset
 - normalizes text
 - resizes images
 - tokenizes question and answer text
 - saves a HuggingFace dataset artifact for training
+
+`scripts/train/train_multimodal_baseline.py`
+
+- trains a first pretrained multimodal baseline on the merged dataset
+- uses image + question as input and answer as target
+
+`scripts/infer/predict_multimodal_baseline.py`
+
+- loads the trained baseline model
+- runs qualitative prediction on a few samples
+- helps quickly inspect whether the model is learning meaningful answers
 
 ## Notebook
 

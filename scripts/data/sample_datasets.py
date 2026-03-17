@@ -11,7 +11,7 @@ DOCVQA_SAMPLE_SIZE = 5000
 CHARTQA_SAMPLE_SIZE = 3000
 RANDOM_SEED = 42
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 OUTPUT_DIR = PROJECT_ROOT / "data" / "raw"
 
 

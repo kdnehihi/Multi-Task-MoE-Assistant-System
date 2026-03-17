@@ -13,6 +13,7 @@ data/processed/*.parquet
 data/processed/multitask_dataset.parquet
 data/processed/training_dataset/
 data/processed/inspection_previews/
+outputs/
 
 # Keep empty data directories tracked if needed
 !data/raw/.gitkeep
