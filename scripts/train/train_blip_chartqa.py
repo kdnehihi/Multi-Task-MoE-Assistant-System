@@ -9,9 +9,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
 DATA_PATH = PROCESSED_DIR / "multitask_dataset.parquet"
-OUTPUT_DIR = PROJECT_ROOT / "outputs" / "blip_multitask_baseline"
+OUTPUT_DIR = PROJECT_ROOT / "outputs" / "blip_chartqa_baseline"
 
 MODEL_NAME = "Salesforce/blip-vqa-base"
+TARGET_TASK = "chartqa"
 MAX_QUESTION_LENGTH = 64
 MAX_ANSWER_LENGTH = 32
 VAL_SIZE = 0.1
@@ -43,8 +44,9 @@ def main() -> None:
     device = get_device()
     print(f"Using device: {device}", flush=True)
 
-    print("Loading multitask dataset...", flush=True)
+    print(f"Loading multitask dataset and filtering task={TARGET_TASK}...", flush=True)
     dataset = load_dataset("parquet", data_files=str(DATA_PATH), split="train")
+    dataset = dataset.filter(lambda example: example["task"] == TARGET_TASK)
     dataset = dataset.train_test_split(test_size=VAL_SIZE, seed=SEED)
 
     print(f"Loading processor and model: {MODEL_NAME}", flush=True)
@@ -116,7 +118,7 @@ def main() -> None:
         eval_dataset=val_dataset,
     )
 
-    print("Starting training...", flush=True)
+    print("Starting ChartQA training...", flush=True)
     trainer.train()
 
     print("Running evaluation...", flush=True)

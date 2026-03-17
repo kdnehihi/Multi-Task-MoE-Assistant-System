@@ -4,12 +4,19 @@ import torch
 from datasets import load_dataset
 from transformers import BlipForQuestionAnswering, BlipProcessor, Trainer, TrainingArguments
 
+try:
+    from peft import LoraConfig, get_peft_model
+except ImportError as exc:
+    raise ImportError(
+        "peft is required for LoRA training. Install it with: pip install peft"
+    ) from exc
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
 DATA_PATH = PROCESSED_DIR / "multitask_dataset.parquet"
-OUTPUT_DIR = PROJECT_ROOT / "outputs" / "blip_multitask_baseline"
+OUTPUT_DIR = PROJECT_ROOT / "outputs" / "blip_multitask_lora"
 
 MODEL_NAME = "Salesforce/blip-vqa-base"
 MAX_QUESTION_LENGTH = 64
@@ -18,9 +25,15 @@ VAL_SIZE = 0.1
 SEED = 42
 
 BATCH_SIZE = 2
-LEARNING_RATE = 5e-5
-NUM_EPOCHS = 2
+GRADIENT_ACCUMULATION_STEPS = 4
+LEARNING_RATE = 1e-4
+NUM_EPOCHS = 4
 WEIGHT_DECAY = 0.01
+
+LORA_R = 8
+LORA_ALPHA = 16
+LORA_DROPOUT = 0.1
+TARGET_MODULES = ["query", "value"]
 
 
 def normalize_text(text):
@@ -50,6 +63,17 @@ def main() -> None:
     print(f"Loading processor and model: {MODEL_NAME}", flush=True)
     processor = BlipProcessor.from_pretrained(MODEL_NAME)
     model = BlipForQuestionAnswering.from_pretrained(MODEL_NAME)
+
+    lora_config = LoraConfig(
+        r=LORA_R,
+        lora_alpha=LORA_ALPHA,
+        lora_dropout=LORA_DROPOUT,
+        bias="none",
+        target_modules=TARGET_MODULES,
+    )
+
+    model = get_peft_model(model, lora_config)
+    model.print_trainable_parameters()
     model.to(device)
 
     def preprocess_batch(batch):
@@ -95,6 +119,7 @@ def main() -> None:
         output_dir=str(OUTPUT_DIR),
         per_device_train_batch_size=BATCH_SIZE,
         per_device_eval_batch_size=BATCH_SIZE,
+        gradient_accumulation_steps=GRADIENT_ACCUMULATION_STEPS,
         learning_rate=LEARNING_RATE,
         weight_decay=WEIGHT_DECAY,
         num_train_epochs=NUM_EPOCHS,
@@ -107,6 +132,9 @@ def main() -> None:
         seed=SEED,
         use_cpu=device.type != "mps",
         dataloader_pin_memory=False,
+        load_best_model_at_end=True,
+        metric_for_best_model="eval_loss",
+        greater_is_better=False,
     )
 
     trainer = Trainer(
@@ -116,7 +144,7 @@ def main() -> None:
         eval_dataset=val_dataset,
     )
 
-    print("Starting training...", flush=True)
+    print("Starting LoRA training...", flush=True)
     trainer.train()
 
     print("Running evaluation...", flush=True)
@@ -124,10 +152,10 @@ def main() -> None:
     print(metrics, flush=True)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    trainer.save_model(str(OUTPUT_DIR / "final_model"))
-    processor.save_pretrained(str(OUTPUT_DIR / "final_model"))
+    trainer.save_model(str(OUTPUT_DIR / "final_adapter"))
+    processor.save_pretrained(str(OUTPUT_DIR / "final_adapter"))
 
-    print("Saved model to:", OUTPUT_DIR / "final_model", flush=True)
+    print("Saved LoRA adapter to:", OUTPUT_DIR / "final_adapter", flush=True)
 
 
 if __name__ == "__main__":

@@ -21,10 +21,20 @@ def normalize_text(text):
     return " ".join(str(text).strip().split())
 
 
+def get_device():
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
+
+
 def main() -> None:
+    device = get_device()
+    print(f"Using device: {device}", flush=True)
+
     print("Loading model and processor...", flush=True)
     processor = BlipProcessor.from_pretrained(str(MODEL_DIR))
     model = BlipForQuestionAnswering.from_pretrained(str(MODEL_DIR))
+    model.to(device)
     model.eval()
 
     print("Loading multitask dataset...", flush=True)
@@ -43,6 +53,7 @@ def main() -> None:
             max_length=MAX_QUESTION_LENGTH,
             return_tensors="pt",
         )
+        inputs = {key: value.to(device) for key, value in inputs.items()}
 
         with torch.no_grad():
             output_ids = model.generate(**inputs, max_length=MAX_GENERATION_LENGTH)
