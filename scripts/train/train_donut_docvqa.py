@@ -2,19 +2,19 @@ from pathlib import Path
 
 import torch
 from datasets import load_dataset
-from transformers import BlipForQuestionAnswering, BlipProcessor, Trainer, TrainingArguments
+from transformers import DonutProcessor, Trainer, TrainingArguments, VisionEncoderDecoderModel
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
 DATA_PATH = PROCESSED_DIR / "multitask_dataset.parquet"
-OUTPUT_DIR = PROJECT_ROOT / "outputs" / "blip_chartqa_baseline"
+OUTPUT_DIR = PROJECT_ROOT / "outputs" / "donut_docvqa_baseline"
 
-MODEL_NAME = "Salesforce/blip-vqa-base"
-TARGET_TASK = "chartqa"
-MAX_QUESTION_LENGTH = 64
-MAX_ANSWER_LENGTH = 32
+MODEL_NAME = "naver-clova-ix/donut-base-finetuned-docvqa"
+TARGET_TASK = "docvqa"
+MAX_PROMPT_LENGTH = 96
+MAX_ANSWER_LENGTH = 64
 VAL_SIZE = 0.1
 SEED = 42
 
@@ -50,31 +50,50 @@ def main() -> None:
     dataset = dataset.train_test_split(test_size=VAL_SIZE, seed=SEED)
 
     print(f"Loading processor and model: {MODEL_NAME}", flush=True)
-    processor = BlipProcessor.from_pretrained(MODEL_NAME)
-    model = BlipForQuestionAnswering.from_pretrained(MODEL_NAME)
+    processor = DonutProcessor.from_pretrained(MODEL_NAME)
+    model = VisionEncoderDecoderModel.from_pretrained(MODEL_NAME)
     model.to(device)
+
+    task_start_token = "<s_docvqa>"
+    eos_token = processor.tokenizer.eos_token
 
     def preprocess_batch(batch):
         questions = [normalize_text(question) for question in batch["question"]]
         answers = [normalize_text(answer) for answer in batch["answer"]]
 
-        model_inputs = processor(
+        prompts = [
+            f"{task_start_token}<s_question>{question}</s_question><s_answer>"
+            for question in questions
+        ]
+
+        image_inputs = processor(
             images=batch["image"],
-            text=questions,
+            random_padding=False,
+            return_tensors="pt",
+        )
+        prompt_tokens = processor.tokenizer(
+            prompts,
+            add_special_tokens=False,
             padding="max_length",
             truncation=True,
-            max_length=MAX_QUESTION_LENGTH,
+            max_length=MAX_PROMPT_LENGTH,
         )
 
-        answer_tokens = processor.tokenizer(
-            answers,
+        full_targets = [f"{prompt}{answer}{eos_token}" for prompt, answer in zip(prompts, answers)]
+        label_tokens = processor.tokenizer(
+            full_targets,
+            add_special_tokens=False,
             padding="max_length",
             truncation=True,
-            max_length=MAX_ANSWER_LENGTH,
+            max_length=MAX_PROMPT_LENGTH + MAX_ANSWER_LENGTH,
         )
 
-        model_inputs["labels"] = build_labels(answer_tokens["input_ids"], processor.tokenizer.pad_token_id)
-        return model_inputs
+        labels = build_labels(label_tokens["input_ids"], processor.tokenizer.pad_token_id)
+        return {
+            "pixel_values": image_inputs["pixel_values"],
+            "decoder_input_ids": prompt_tokens["input_ids"],
+            "labels": labels,
+        }
 
     print("Tokenizing train split...", flush=True)
     train_dataset = dataset["train"].map(
@@ -118,7 +137,7 @@ def main() -> None:
         eval_dataset=val_dataset,
     )
 
-    print("Starting ChartQA training...", flush=True)
+    print("Starting DocVQA training...", flush=True)
     trainer.train()
 
     print("Running evaluation...", flush=True)

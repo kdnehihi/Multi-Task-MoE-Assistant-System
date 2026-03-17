@@ -105,8 +105,8 @@ Multi-Task-MoE-Assistant-System
     │   ├── preprocess_multitask_dataset.py
     │   └── prepare_training_dataset.py
     ├── train/
-    │   ├── train_blip_docvqa.py
-    │   └── train_blip_chartqa.py
+    │   ├── train_donut_docvqa.py
+    │   └── train_pix2struct_chartqa.py
     └── infer/
 ```
 
@@ -144,14 +144,14 @@ Multi-Task-MoE-Assistant-System
 - tokenizes question and answer text
 - saves a HuggingFace dataset artifact for training
 
-`scripts/train/train_blip_docvqa.py`
+`scripts/train/train_donut_docvqa.py`
 
-- trains a BLIP baseline only on the `DocVQA` subset
+- trains a Donut baseline only on the `DocVQA` subset
 - provides a single-task loss baseline for later MoE comparison
 
-`scripts/train/train_blip_chartqa.py`
+`scripts/train/train_pix2struct_chartqa.py`
 
-- trains a BLIP baseline only on the `ChartQA` subset
+- trains a Pix2Struct baseline only on the `ChartQA` subset
 - provides a single-task loss baseline for later MoE comparison
 
 ## Notebook

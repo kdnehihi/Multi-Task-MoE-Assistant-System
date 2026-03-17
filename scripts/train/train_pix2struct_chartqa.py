@@ -2,18 +2,18 @@ from pathlib import Path
 
 import torch
 from datasets import load_dataset
-from transformers import BlipForQuestionAnswering, BlipProcessor, Trainer, TrainingArguments
+from transformers import Pix2StructForConditionalGeneration, Pix2StructProcessor, Trainer, TrainingArguments
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
 DATA_PATH = PROCESSED_DIR / "multitask_dataset.parquet"
-OUTPUT_DIR = PROJECT_ROOT / "outputs" / "blip_docvqa_baseline"
+OUTPUT_DIR = PROJECT_ROOT / "outputs" / "pix2struct_chartqa_baseline"
 
-MODEL_NAME = "Salesforce/blip-vqa-base"
-TARGET_TASK = "docvqa"
-MAX_QUESTION_LENGTH = 64
+MODEL_NAME = "google/pix2struct-chartqa-base"
+TARGET_TASK = "chartqa"
+MAX_PATCHES = 1024
 MAX_ANSWER_LENGTH = 32
 VAL_SIZE = 0.1
 SEED = 42
@@ -50,8 +50,8 @@ def main() -> None:
     dataset = dataset.train_test_split(test_size=VAL_SIZE, seed=SEED)
 
     print(f"Loading processor and model: {MODEL_NAME}", flush=True)
-    processor = BlipProcessor.from_pretrained(MODEL_NAME)
-    model = BlipForQuestionAnswering.from_pretrained(MODEL_NAME)
+    processor = Pix2StructProcessor.from_pretrained(MODEL_NAME)
+    model = Pix2StructForConditionalGeneration.from_pretrained(MODEL_NAME)
     model.to(device)
 
     def preprocess_batch(batch):
@@ -61,9 +61,8 @@ def main() -> None:
         model_inputs = processor(
             images=batch["image"],
             text=questions,
-            padding="max_length",
             truncation=True,
-            max_length=MAX_QUESTION_LENGTH,
+            max_patches=MAX_PATCHES,
         )
 
         answer_tokens = processor.tokenizer(
@@ -118,7 +117,7 @@ def main() -> None:
         eval_dataset=val_dataset,
     )
 
-    print("Starting DocVQA training...", flush=True)
+    print("Starting ChartQA training...", flush=True)
     trainer.train()
 
     print("Running evaluation...", flush=True)
