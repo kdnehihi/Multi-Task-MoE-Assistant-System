@@ -23,7 +23,6 @@ LEARNING_RATE = 5e-5
 NUM_EPOCHS = 2
 WEIGHT_DECAY = 0.01
 
-
 def normalize_text(text):
     if text is None:
         return ""
