@@ -1,86 +1,63 @@
 # Multi-Task MoE Assistant System
 
-This project explores building a multimodal assistant with a Mixture-of-Experts (MoE) architecture, where different experts specialize in different task types and the system learns to route inputs to the right experts.
+Research code for testing multimodal multitask baselines and a first soft-routed Mixture-of-Experts idea on:
 
-The current implementation focus is on the data pipeline needed for a first multitask vision-language training setup. At this stage, the repository is centered on preparing a unified dataset from document and chart question answering benchmarks before moving on to model training and routing experiments.
+- `DocVQA`
+- `ChartQA`
 
-## Motivation
+The repo is intentionally lightweight and experimental. It is meant to help answer questions like:
 
-Most language and vision-language models are dense: every input is processed by the same parameters regardless of task type.
+- can the data pipeline train end-to-end?
+- what do single-task baselines look like?
+- what happens if we route by question into multiple visual encoders before answer generation?
 
-This project investigates whether a shared backbone with task-specialized experts can:
-
-- encourage functional specialization
-- improve modularity
-- make routing behavior easier to analyze
-- provide a clean research setup for multitask multimodal learning
+This is not a polished framework. It is a compact sandbox for trying baseline and MoE-style ideas quickly.
 
 ## Current Scope
 
-The current phase focuses on a multimodal multitask dataset built from:
+The project currently covers three layers:
 
-- `DocVQA` (`lmms-lab/DocVQA`, config: `DocVQA`)
-- `ChartQA` (`HuggingFaceM4/ChartQA`)
+1. data preparation for a unified multimodal QA dataset
+2. single-task baselines for each source dataset
+3. Colab notebooks for multitask dense and MoE-style experiments
 
-Both datasets are sampled into smaller subsets for faster experimentation, then normalized into a shared format suitable for downstream MoE-style training.
-
-Target unified sample format:
+The shared sample format used across the repo is:
 
 ```python
 {
     "task": "docvqa" or "chartqa",
-    "image": PIL image,
+    "image": PIL.Image,
     "question": "...",
     "answer": "..."
 }
 ```
 
-## Current Status
+## Datasets
 
-The project is in the data engineering and research prototyping stage.
+The current experiments use:
 
-What is already implemented:
+- `lmms-lab/DocVQA` with config `DocVQA`
+- `HuggingFaceM4/ChartQA`
 
-- dataset download scripts for `DocVQA` and `ChartQA`
-- lightweight sampling for rapid experimentation
-- inspection utilities for schema and image preview
-- notebook-based data exploration
-- preprocessing into a unified multitask dataset
-- baseline training preprocessing:
-  - image resize
-  - text normalization
-  - tokenizer-based conversion to `input_ids`, `attention_mask`, and `labels`
-- single-task BLIP baselines for `DocVQA` and `ChartQA` to support later comparison with MoE models
+They are sampled and normalized into a shared multitask parquet file for local scripts, while the Colab notebooks can also pull from Hugging Face directly.
 
-What is not implemented yet:
+## What Is Implemented
 
-- core MoE layer
-- routing module
-- training loop
-- expert utilization tracking
-- evaluation pipeline
+- dataset download and inspection scripts
+- sampled-data preprocessing into a single multitask parquet file
+- single-task `ChartQA` baseline with `Pix2Struct`
+- single-task `DocVQA` baseline with `Donut`
+- quick inference script for the `ChartQA` baseline
+- Colab notebook for single-task training
+- Colab notebook for multitask dense baseline
+- Colab notebook for a soft-routed two-encoder MoE prototype
 
-## Data Pipeline
+## What Is Not Implemented
 
-The current intended workflow is:
-
-1. Download source datasets
-2. Sample smaller subsets for quick iteration
-3. Inspect data quality and schema
-4. Merge both datasets into a single multitask dataset
-5. Apply basic preprocessing for training
-6. Train single-task baselines for each source dataset
-7. Introduce MoE routing and expert specialization experiments
-
-## Environment
-
-- Python 3.10
-- Conda environment: `moe-assistant`
-- Main libraries:
-  - `torch`
-  - `transformers`
-  - `datasets`
-  - `pillow`
+- a full MoME reproduction
+- a production-ready training framework
+- a stable evaluation harness with benchmark metrics
+- large-scale checkpoint orchestration
 
 ## Repository Structure
 
@@ -88,98 +65,176 @@ The current intended workflow is:
 Multi-Task-MoE-Assistant-System
 ├── README.md
 ├── resources/
-│   ├── DLMulti-Task Learning.pdf
-│   ├── MixtralOfExperts.pdf
-│   └── SwitchTransformers.pdf
 ├── data/
 │   ├── raw/
 │   └── processed/
 ├── notebooks/
-│   └── 01_data_inspection.ipynb
+│   ├── 02_colab_train_donut_docvqa.ipynb
+│   ├── 03_colab_end_to_end_single_task_baseline.ipynb
+│   ├── 04_colab_multitask_pix2struct_baseline.ipynb
+│   └── 05_colab_multitask_pix2struct_query_router_moe.ipynb
 └── scripts/
     ├── data/
     │   ├── DownloadDataset.py
     │   ├── InspectDataset.py
-    │   ├── sample_datasets.py
     │   ├── inspect_sampled_data.py
+    │   ├── sample_datasets.py
     │   ├── preprocess_multitask_dataset.py
     │   └── prepare_training_dataset.py
-    ├── train/
-    │   ├── train_donut_docvqa.py
-    │   └── train_pix2struct_chartqa.py
-    └── infer/
+    ├── infer/
+    │   └── predict_pix2struct_chartqa.py
+    └── train/
+        ├── train_donut_docvqa.py
+        └── train_pix2struct_chartqa.py
 ```
 
-## Scripts
+## Local Workflow
 
-`scripts/data/DownloadDataset.py`
+Local is mainly useful for:
 
-- downloads the original HuggingFace datasets
+- data preparation
+- quick inspection
+- `ChartQA` baseline runs
+- small `DocVQA` smoke tests
 
-`scripts/data/sample_datasets.py`
+Suggested flow:
 
-- samples:
-  - `5000` examples from `DocVQA`
-  - `3000` examples from `ChartQA`
-- saves sampled parquet files into `data/raw/`
+1. sample datasets
+2. inspect samples
+3. build the multitask parquet
+4. train one of the single-task baselines
 
-`scripts/data/inspect_sampled_data.py`
+### Data Preparation
 
-- loads sampled parquet files
-- prints schema and example rows
-- exports preview images for manual inspection
+```bash
+python scripts/data/sample_datasets.py
+python scripts/data/inspect_sampled_data.py
+python scripts/data/preprocess_multitask_dataset.py
+```
 
-`scripts/data/preprocess_multitask_dataset.py`
+### Train ChartQA Baseline
 
-- loads sampled datasets
-- normalizes both sources into a shared schema
-- merges them into a multitask dataset
-- saves the merged parquet file into `data/processed/`
+```bash
+python scripts/train/train_pix2struct_chartqa.py
+```
 
-`scripts/data/prepare_training_dataset.py`
+### Inspect ChartQA Predictions
 
-- loads the multitask dataset
-- normalizes text
-- resizes images
-- tokenizes question and answer text
-- saves a HuggingFace dataset artifact for training
+```bash
+python scripts/infer/predict_pix2struct_chartqa.py
+```
 
-`scripts/train/train_donut_docvqa.py`
+### Train DocVQA Baseline
 
-- trains a Donut baseline only on the `DocVQA` subset
-- provides a single-task loss baseline for later MoE comparison
+```bash
+python scripts/train/train_donut_docvqa.py
+```
 
-`scripts/train/train_pix2struct_chartqa.py`
+Notes:
 
-- trains a Pix2Struct baseline only on the `ChartQA` subset
-- provides a single-task loss baseline for later MoE comparison
+- `train_donut_docvqa.py` is intentionally configured as a local-safe research script
+- it uses a small sample cap and disables checkpoint saving
+- for longer or heavier `DocVQA` runs, Colab is the preferred path
 
-## Notebook
+## Colab Workflow
 
-`notebooks/01_data_inspection.ipynb`
+For heavier experiments, the notebooks are the main interface.
 
-- explores the sampled datasets interactively
-- visualizes image-question-answer samples
-- checks schema, lengths, and quick statistics
-- helps prototype preprocessing logic before moving it into Python scripts
+### 1. Single-Task End-to-End
+
+`notebooks/03_colab_end_to_end_single_task_baseline.ipynb`
+
+Use this when you want one notebook that:
+
+- downloads data
+- samples a subset
+- preprocesses it
+- trains one single-task baseline
+
+Supported modes:
+
+- `TASK = 'docvqa'`
+- `TASK = 'chartqa'`
+
+### 2. Dense Multitask Baseline
+
+`notebooks/04_colab_multitask_pix2struct_baseline.ipynb`
+
+This notebook trains a multitask dense baseline using a shared `Pix2Struct` backbone across both `DocVQA` and `ChartQA`.
+
+Use it as the dense baseline to compare against later routing experiments.
+
+### 3. Soft-Routed Two-Encoder MoE Prototype
+
+`notebooks/05_colab_multitask_pix2struct_query_router_moe.ipynb`
+
+This notebook is the current MoE-style experiment.
+
+It uses:
+
+- a router that reads the question
+- a softmax over two visual encoders
+- weighted fusion of the two encoder outputs
+- a shared answer decoder
+
+Current prototype design:
+
+- encoder 1: `ViT`
+- encoder 2: `Swin`
+- router input: question text
+
+This is not meant to be the final architecture. It is the first research testbed for soft routing at the visual-encoder stage.
+
+## Baseline Summary
+
+At the moment, the repo gives you three useful comparison points:
+
+1. `ChartQA` single-task baseline with `Pix2Struct`
+2. `DocVQA` single-task baseline with `Donut`
+3. multitask dense baseline in Colab
+
+Then the next comparison is the soft-routed two-encoder notebook.
+
+## Environment
+
+Local environment used during development:
+
+- Python `3.10`
+- Conda env: `moe-assistant`
+
+Core libraries:
+
+- `torch`
+- `transformers`
+- `datasets`
+- `pillow`
+- `accelerate`
+- `sentencepiece`
+
+## Practical Notes
+
+- local Mac runs are fine for lighter experiments, but `DocVQA` is much better suited to Colab
+- notebook `03` contains the most practical end-to-end single-task Colab path
+- notebook `04` is the dense multitask baseline
+- notebook `05` is the current MoE prototype
+- the code is intentionally minimal and easy to change rather than heavily abstracted
 
 ## Research Direction
 
-The medium-term plan is:
+The near-term plan this repo supports is:
 
-1. establish strong single-task and multitask multimodal baselines
-2. define a shared model backbone
-3. introduce MoE feed-forward experts
-4. study routing behavior across task types
-5. compare dense vs. expert-routed training
+1. validate data and training loops
+2. collect single-task and dense multitask baselines
+3. test question-conditioned routing over multiple visual encoders
+4. inspect whether different tasks lean toward different experts
+5. iterate toward a stronger multimodal MoE design
 
 ## References
 
-This repository is inspired by:
+This repo is loosely inspired by:
 
-- Switch Transformer (Fedus et al., 2021)
-- Mixtral 8x7B Technical Report (Mistral AI, 2023)
-- MoME: Mixture of Multimodal Experts for Generalist
-Multimodal Large Language Models
+- Switch Transformer
+- Mixtral
+- MoME: Mixture of Multimodal Experts for Generalist Multimodal Large Language Models
 
-The goal is not to reproduce these systems exactly, but to build a smaller research-oriented implementation for understanding multitask expert specialization in multimodal settings.
+The goal here is not exact reproduction. The goal is fast research iteration on multimodal routing ideas.
