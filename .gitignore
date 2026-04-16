@@ -6,6 +6,9 @@ __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
 
+# Notebooks
+notebooks/*.ipynb
+
 # Local dataset/cache artifacts
 .hf_cache/
 data/raw/*.parquet
@@ -18,4 +21,3 @@ outputs/
 # Keep empty data directories tracked if needed
 !data/raw/.gitkeep
 !data/processed/.gitkeep
-notebooks/01_data_inspection.ipynb
