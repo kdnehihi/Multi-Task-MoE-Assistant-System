@@ -195,6 +195,25 @@ At the moment, the repo gives you three useful comparison points:
 
 Then the next comparison is the soft-routed two-encoder notebook.
 
+### Recorded Baseline Losses
+
+Losses currently recovered from saved trainer checkpoints in `outputs/`:
+
+- `Pix2Struct + ChartQA`
+  - final train log near epoch end: `0.3754`
+  - `eval_loss = 0.6266`
+- `BLIP + ChartQA`
+  - final train log near epoch end: `2.4986`
+  - `eval_loss = 3.3492`
+- `BLIP multitask baseline`
+  - final train log near epoch end: `3.8854`
+  - `eval_loss = 3.7679`
+- `BLIP multitask LoRA`
+  - final train log near epoch end: `17.6419`
+  - `eval_loss = 4.4062`
+
+These numbers are not meant as polished benchmark reporting. They are just the current research reference points preserved from previous runs.
+
 ## Environment
 
 Local environment used during development:
